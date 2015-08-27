@@ -1,4 +1,5 @@
 ﻿import re
+from os import listdir, getcwd
 from scrapy.spiders import Spider
 from cl_jobs.items import ChanItem
 from scrapy.selector import Selector
@@ -8,12 +9,16 @@ class MySpider(Spider):
     name = "4ch_gomi"
     allowed_domains = ["boards.4chan.org"]
 
-    def __init__(self, thread=""):
+    def __init__(self, combine=False, thread=""):
+        self.combine = combine
+        self.threadNum = re.search('[0-9]+', thread).group()
+        self.header = '"post_num","thread_num","timestamp","time_difference","user_post"\n'
+
         self.start_urls = ['http://boards.4chan.org/%s' % thread] # HTTP ONLY, NO HTTPS
 
     def parse(self, response):
         inFile = "userposts.txt"
-        outFile = "posts.csv"
+        outFile = ("output/%s.csv" % self.threadNum)
 
         item = ChanItem()
         item["title"] = response.url
@@ -44,7 +49,7 @@ class MySpider(Spider):
 
         prevTime = times[0]
         with open(outFile, 'wb') as f:
-            f.write('"post_num","timestamp","time_difference","user_post"\n')
+            f.write(self.header)
             for i in range(0, len(ext)):
                 diff = times[i] - prevTime
                 # check if user post
@@ -52,7 +57,21 @@ class MySpider(Spider):
                     isUserPost = True
                 else:
                     isUserPost = False
-                f.write(str(postNum[i]) + "," + str(times[i]) + "," + str(diff) + "," + str(isUserPost) + "\n")
+                f.write(str(postNum[i]) + "," + self.threadNum + "," + str(times[i]) + "," + str(diff) + "," + \
+                        str(isUserPost) + "\n")
                 prevTime = times[i]
+
+        # combine threads
+        if self.combine:
+            files = listdir( "%s\output" % getcwd() )
+            data = [self.header]
+            for file in files:
+                with open("output\\" + file, 'r') as f:
+                    imp = f.readlines()[1:] # ignore header
+                for row in imp:
+                    data.append(row)
+            with open("output\\combined.csv", 'wb') as f:
+                for row in data:
+                    f.write(row)
 
         return item

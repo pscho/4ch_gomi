@@ -8,7 +8,6 @@ class MySpider(Spider):
     name = "cl_gomi"
     allowed_domains = ["harrisonburg.craigslist.org"]
     start_urls = ["http://harrisonburg.craigslist.org/search/ela"]
-    #start_urls = ["http://net.tutsplus.com"]
 
     def parse(self, response):
 
@@ -17,8 +16,8 @@ class MySpider(Spider):
         item["title"] = response.url
         item["body"] = response.body
         
-        #body = '<html><body><span>good</span></body></html>'
-        ext = Selector(response=response).xpath('//html/head/title/text()').extract()
+        #ext = Selector(response=response).xpath('//html/head/title/text()').extract()
+        ext = Selector(response=response).xpath('//html/body/section/div/form/div/div/p').extract()
         print type(ext)
         print ext
 
