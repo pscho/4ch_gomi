@@ -1,0 +1,6 @@
+*.pyc
+*.pyproj
+*.csv
+*.txt
+
+/output
